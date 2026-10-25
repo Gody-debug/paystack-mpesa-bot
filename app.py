@@ -13,6 +13,28 @@ from pdf_reader import extract_numbers
 st.set_page_config(page_title="M-Pesa Prompt Bot", page_icon="💸", layout="wide")
 db.init_db()
 
+import os
+import hmac
+
+APP_PASSWORD = os.getenv("APP_PASSWORD", "")
+
+if not APP_PASSWORD:
+    st.error("Access is disabled. Configure APP_PASSWORD in Render Environment Variables.")
+    st.stop()
+
+if not st.session_state.get("authenticated", False):
+    st.title("Restricted Access")
+    password = st.text_input("Enter administrator password", type="password")
+    if st.button("Sign In"):
+        if hmac.compare_digest(password, APP_PASSWORD):
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+    st.stop()
+
+
+
 
 def send_one(phone: str, amount: float, batch_id: str) -> None:
     """Worker thread: record, charge, update. Touches only the DB and Paystack."""
